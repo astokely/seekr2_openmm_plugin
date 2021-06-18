@@ -247,12 +247,18 @@ void CudaIntegrateMmvtLangevinStepKernel::execute(ContextImpl& context, const Mm
     for (int i=0; i<integrator.getNumMilestoneGroups(); i++) {
         value = context.calcForcesAndEnergy(includeForces, includeEnergy, bitvector[i]);
         if (value > 0.0) { // take a step back and reverse velocities
-            if (cu.getStepCount() <= 0)
-                throw OpenMMException("MMVT simulation bouncing on first step: the system will be trapped behind a boundary. Check and revise MMVT boundary definitions and/or atomic positions.");
-            bounced = true;
-            // Write to output file
             ofstream datafile; // open datafile for writing
-            datafile.open(outputFileName, std::ios_base::app); // append to file
+            if (i == 0) {
+                if (cu.getStepCount() <= 0) {
+                    throw OpenMMException("MMVT simulation bouncing on first step: the system will be trapped behind a boundary. Check and revise MMVT boundary definitions and/or atomic positions.");
+                }
+                bounced = true;
+                datafile.open(outputFileName, std::ios_base::app); // append to file
+            }
+            else {
+                datafile.open("internal_crossings.txt", std::ios_base::app); // append to file
+            } 
+            // Write to output file
             datafile.setf(std::ios::fixed,std::ios::floatfield);
             datafile.precision(3);
             float milestone_index = log2(value) + 1.0;

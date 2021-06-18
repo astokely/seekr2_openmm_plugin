@@ -47,8 +47,24 @@ cvforce.addPerBondParameter('radius2')
 cvforce.addBond([rec_group, lig_group], [1, 2, 11.0*angstroms, 13.0*angstroms])
 CvForce = system.addForce(cvforce)
 
+internal_cvforce = CustomCentroidBondForce(
+    2, 
+    "k1*step(-1*(distance(g1,g2)^2-radius1^2))"
+    + "+ k2*step(distance(g1, g2)^2 - radius2^2)"
+)
+rec_group = internal_cvforce.addGroup(rec_indices)
+lig_group = internal_cvforce.addGroup(lig_indices)
+internal_cvforce.setForceGroup(2)
+internal_cvforce.addPerBondParameter('k1')
+internal_cvforce.addPerBondParameter('k2')
+internal_cvforce.addPerBondParameter('radius1')
+internal_cvforce.addPerBondParameter('radius2')
+internal_cvforce.addBond([rec_group, lig_group], [1, 2, 11.1*angstroms, 12.9*angstroms])
+CvForce = system.addForce(internal_cvforce)
+
 integrator = MmvtLangevinIntegrator(300*kelvin, 1/picosecond, 0.002*picoseconds, "1_cv.txt")
 integrator.addMilestoneGroup(1)
+integrator.addMilestoneGroup(2)
 
 platform = Platform.getPlatformByName('CUDA')
 properties = {'CudaDeviceIndex': '0', 'CudaPrecision': 'mixed'}
